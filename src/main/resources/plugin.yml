@@ -1,0 +1,4 @@
+name: SmartSpawner
+version: '1.0.0'
+main: it.moro.smartspawner.SmartSpawner
+api-version: '1.21'
