@@ -1,0 +1,21 @@
+anvil-protection: true
+grindstone-protection: true
+spawner-collection: true
+spawner-place: true
+trialspawner-collection: true
+trialspawner-place: true
+
+item-initial-damage: 0
+damage-item-value: 16
+
+recipes:
+  enable: true
+  item-name: "&4Piccone Spawner"
+  crafting:
+    shape:
+      - "EEE"
+      - " S "
+      - " S "
+    ingredients:
+      E: "EMERALD"
+      S: "STICK"
