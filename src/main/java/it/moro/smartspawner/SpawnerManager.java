@@ -2,14 +2,13 @@ package it.moro.smartspawner;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.TrialSpawner;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.command.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,7 +16,6 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -38,10 +36,7 @@ import org.bukkit.spawner.TrialSpawnerConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
@@ -75,55 +70,103 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         Player player = (Player) sender;
-
-        if (player.hasPermission("smartspawner.spawnerpickaxe")) {
-            if (command.getName().equalsIgnoreCase("spawnerpickaxe")) {
-                ItemStack spawnerPickaxe = createSpawnerPickaxe();
-                player.getInventory().addItem(spawnerPickaxe);
-                player.sendMessage(
-                        "Hai ricevuto: " + Objects.requireNonNull(config.getString("recipes.item-name")).replaceAll("&", "§") + "!");
+        if (command.getName().equalsIgnoreCase("spawnerpickaxe")) {
+            if (player.hasPermission("smartspawner.spawnerpickaxe")) {
+                givePickaxe(player);
+                return true;
+            } else {
+                player.sendMessage("§cNon hai il permesso per usare questo comando!");
                 return true;
             }
-        }
-
-        if (player.hasPermission("smartspawner.givespawner")) {
-            if (command.getName().equalsIgnoreCase("givespawner")) {
-                if (args.length < 1 || args.length > 2) {
-                    player.sendMessage("Uso corretto: /givespawner [entità] [nome giocatore (opzionale)]");
-                    return true;
-                }
-
-                String entityTypeArg = args[0].toUpperCase();
-                EntityType entityType;
-                try {
-                    entityType = EntityType.valueOf(entityTypeArg);
-                } catch (IllegalArgumentException e) {
-                    player.sendMessage("Tipo entità non valido.");
-                    return true;
-                }
-
-                ItemStack spawnerItem = createSpawnerItem(entityType);
-
-                if (args.length == 2) {
-                    Player targetPlayer = Bukkit.getPlayer(args[1]);
-                    if (targetPlayer == null) {
-                        player.sendMessage("Giocatore non trovato.");
-                        return true;
+        } else if (command.getName().equalsIgnoreCase("givespawner")) {
+            if (player.hasPermission("smartspawner.givespawner")) {
+                if (args.length == 1) {
+                    if (command instanceof ConsoleCommandSender console) {
+                        console.sendMessage("§cQuesto comando è eseguibile solo dal giocatore!");
+                    } else {
+                        giveSpawner(player, args[0]);
                     }
-                    targetPlayer.getInventory().addItem(spawnerItem);
-                    targetPlayer.sendMessage("Hai ricevuto uno spawner di " + entityType.name().toLowerCase() + ".");
-                } else {
-                    player.getInventory().addItem(spawnerItem);
-                    player.sendMessage("Hai ricevuto uno spawner di " + entityType.name().toLowerCase() + ".");
+                    return true;
+                } else if (args.length == 2) {
+                    Player target = Bukkit.getPlayerExact(args[1]);
+                    if (target != null) {
+                        giveSpawner(target, args[0]);
+                    } else {
+                        player.sendMessage("§cGiocatore non trovato!");
+                    }
+                    return true;
                 }
+            } else {
+                player.sendMessage("§cNon hai il permesso per usare questo comando!");
+                return true;
+            }
+        } else if (command.getName().equalsIgnoreCase("givetrialspawner")) {
+            if (player.hasPermission("smartspawner.givetrialspawner")) {
+                if (args.length == 1) {
+                    if (command instanceof ConsoleCommandSender console) {
+                        console.sendMessage("§cQuesto comando è eseguibile solo dal giocatore!");
+                    } else {
+                        giveTrialSpawner(player, args[0]);
+                    }
+                    return true;
+                } else if (args.length == 2) {
+                    Player target = Bukkit.getPlayerExact(args[1]);
+                    if (target != null) {
+                        giveTrialSpawner(target, args[0]);
+                    } else {
+                        player.sendMessage("§cGiocatore non trovato!");
+                    }
+                    return true;
+                }
+            } else {
+                player.sendMessage("§cNon hai il permesso per usare questo comando!");
                 return true;
             }
         } else {
-            player.sendMessage("Non hai il permesso per eseguire questo comando!");
+            player.sendMessage("§cComando non riconosciuto!");
             return true;
         }
-
         return false;
+    }
+
+    public void givePickaxe(Player player) {
+        ItemStack spawnerPickaxe = createSpawnerPickaxe();
+        player.getInventory().addItem(spawnerPickaxe);
+        player.sendMessage(
+                "Hai ricevuto: " + Objects.requireNonNull(config.getString("recipes.item-name"))
+                        .replaceAll("&", "§") + "!");
+    }
+
+    public void giveSpawner(Player player, String entity) {
+        EntityType entityType = null;
+        try {
+            entityType = EntityType.valueOf(entity.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            player.sendMessage("Tipo entità non valido.");
+        }
+        ItemStack spawnerItem = createSpawnerItem(entityType);
+        player.getInventory().addItem(spawnerItem);
+        player.sendMessage("Hai ricevuto uno Spawner di " + entity);
+    }
+
+    public void giveTrialSpawner(Player player, String entity) {
+        EntityType value = null;
+        try {
+            value = EntityType.valueOf(entity);
+            ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
+            BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
+            TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
+            TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
+            SpawnerConf.setSpawnedType(value);
+            metaSpawner.setBlockState((BlockState) StateSpawner);
+            spawner.setItemMeta((ItemMeta) metaSpawner);
+            player.getInventory().addItem(spawner);
+            player.sendMessage("Hai ricevuto un TrialSpawner di " + entity);
+        } catch (IllegalArgumentException e) {
+            if (player != null) {
+                player.sendMessage("Entità non valida!");
+            }
+        }
     }
 
     //------------------------------------------------------------- RACCOLTA SPAWNER ---------------------------------------------------------
@@ -134,9 +177,12 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         Block block = event.getClickedBlock();
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() == Material.GOLDEN_PICKAXE &&
+        if (isEqualsItem(item, createSpawnerPickaxe())
+                /*item.getType() == Material.GOLDEN_PICKAXE &&
                 item.getItemMeta().getEnchants().containsKey(Enchantment.SILK_TOUCH) &&
-                item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2) {
+                item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2*/ ||
+                !plugin.getConfig().getBoolean("custom-tool-required") &&
+                        item.getType().name().contains("PICKAXE")) {
             if (block.getType() == Material.TRIAL_SPAWNER) {
                 if (plugin.getConfig().getBoolean("trialspawner-collection")) {
                     new BukkitRunnable() {
@@ -157,7 +203,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                                 block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation(), 20, Material.TRIAL_SPAWNER.createBlockData());
                                 if (event.getPlayer().getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
                                     ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
-                                    if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value")+1) {
+                                    if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value") + 1) {
                                         player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
                                         player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
                                     } else {
@@ -179,22 +225,12 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getType() == Material.GOLDEN_PICKAXE &&
+        if ( isEqualsItem(item, createSpawnerPickaxe())
+                /*item.getType() == Material.GOLDEN_PICKAXE &&
                 item.getItemMeta().getEnchants().containsKey(Enchantment.SILK_TOUCH) &&
-                item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2) {
-            /*if (block.getType() == Material.TRIAL_SPAWNER) {
-                TrialSpawner spawner = (TrialSpawner) block.getState();
-                TrialSpawnerConfiguration spawnerconfig = spawner.getNormalConfiguration();
-                ItemStack spawnerItem = new ItemStack(Material.TRIAL_SPAWNER);
-                BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
-                if (spawnerconfig.getSpawnedType() == null) {
-                    return;
-                }
-                meta.setBlockState((BlockState)spawner);
-                spawnerItem.setItemMeta(meta);
-                block.setType(Material.AIR);
-                block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
-            } else */
+                item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2*/ ||
+                !plugin.getConfig().getBoolean("custom-tool-required") &&
+                        item.getType().name().contains("PICKAXE")) {
             if (block.getType() == Material.SPAWNER) {
                 if (plugin.getConfig().getBoolean("spawner-collection")) {
                     if (block.getState() instanceof CreatureSpawner spawner) {
@@ -210,11 +246,11 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                             block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
                             if (player.getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
                                 ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
-                                if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value")+1) {
+                                if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value") + 1) {
                                     player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
                                     player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
                                 } else {
-                                    damageable.setDamage(damageable.getDamage() + plugin.getConfig().getInt("damage-item-value")-1);
+                                    damageable.setDamage(damageable.getDamage() + plugin.getConfig().getInt("damage-item-value") - 1);
                                     event.getPlayer().getInventory().getItemInMainHand().setItemMeta((ItemMeta) damageable);
                                 }
                             }
@@ -225,6 +261,27 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                 event.setCancelled(true);
             }
         }
+    }
+
+    public boolean isEqualsItem(ItemStack item, ItemStack pickaxe) {
+        if (Objects.equals(item.getType(), pickaxe.getType())) {
+            ItemMeta itemMeta = item.getItemMeta();
+            ItemMeta pickaxeMeta = pickaxe.getItemMeta();
+            if (itemMeta != null || pickaxeMeta != null) {
+                if (Objects.equals(itemMeta.displayName(), pickaxeMeta.displayName())) {
+                    if (Objects.equals(itemMeta.displayName(), pickaxeMeta.displayName())) {
+                        if(plugin.getConfig().getBoolean("recipes.enchants-required")) {
+                            Map<Enchantment, Integer> itemEnchants = itemMeta.getEnchants();
+                            Map<Enchantment, Integer> pickaxeEnchants = pickaxeMeta.getEnchants();
+                            return Objects.equals(itemEnchants, pickaxeEnchants);
+                        } else {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 //------------------------------------------------------------- ANNULLO ATTACCO CON PICCONE ---------------------------------------------------------
 
@@ -380,26 +437,63 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
 
     //------------------------------------------------------------- PICCONE SPAWNER ---------------------------------------------------------
     public ItemStack createSpawnerPickaxe() {
-        // Crea il pickaxe come un oggetto d'oro
-        ItemStack item = new ItemStack(Material.GOLDEN_PICKAXE);
-
-        // Ottieni i metadati dell'oggetto
-        ItemMeta meta = item.getItemMeta();
-        if (meta instanceof Damageable damageable) {
-            damageable.setDamage(plugin.getConfig().getInt("item-initial-damage"));
-            item.setItemMeta(damageable);
+        String materialName = plugin.getConfig().getString("recipes.item");
+        Material material = null;
+        try {
+            assert materialName != null;
+            material = Material.matchMaterial(materialName.toUpperCase());
+            if (material == null) {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
         }
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (plugin.getConfig().getInt("item-initial-damage") != 0) {
+            if (meta instanceof Damageable damageable) {
+                damageable.setDamage(plugin.getConfig().getInt("item-initial-damage"));
+                item.setItemMeta(damageable);
+            }
+        }
+        if(!Objects.equals(plugin.getConfig().getString("recipes.item-name"), "")) {
+            String spawnerPickaxeName = Objects.requireNonNull(config.getString("recipes.item-name")).replaceAll("&", "§");
+            meta.displayName(Component.text(spawnerPickaxeName));
+        }
+        if(plugin.getConfig().getBoolean("recipes.enchants-required")){
+            List<String> enchantments = plugin.getConfig().getStringList("recipes.enchants");
+            for (String enchant : enchantments) {
+                try {
+                    String[] parts = enchant.split(":");
+                    if (parts.length != 2) {
+                        continue;
+                    }
+                    String enchantName = parts[0];
+                    int level = Integer.parseInt(parts[1]);
+                    Enchantment enchantment = Enchantment.getByName(enchantName.toUpperCase());
+                    if (enchantment != null) {
+                        meta.addEnchant(enchantment, level, true);
+                    } else {
+                        System.out.println("Incantesimo '" + enchantName + "' non trovato.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Livello incantesimo non valido in: " + enchant);
+                }
+            }
+            if(plugin.getConfig().getBoolean("recipes.hide-enchants")){
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            }
 
-        // Modifica i metadati per aggiungere nome e incantamenti
-        String spawnerPickaxeName = Objects.requireNonNull(config.getString("recipes.item-name")).replaceAll("&", "§");
-        meta.displayName(Component.text(spawnerPickaxeName));
-        meta.addEnchant(Enchantment.SILK_TOUCH, 2, true);
-        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        meta.addItemFlags(ItemFlag.HIDE_DESTROYS);
-
-        // Imposta i metadati aggiornati
+        }
+        NamespacedKey speedKey = new NamespacedKey(plugin, "attack_speed");
+        AttributeModifier attackSpeedModifier = new AttributeModifier(
+                speedKey,
+                0.0,
+                AttributeModifier.Operation.ADD_NUMBER
+        );
+        meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, attackSpeedModifier);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
-
         return item;
     }
 

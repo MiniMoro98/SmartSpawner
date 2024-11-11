@@ -1,16 +1,49 @@
+#Prevents the custom pickaxe for harvesting spawners from being modified by the anvil
 anvil-protection: true
+
+#Prevents the custom pickaxe for harvesting spawners from being modified by the grindstone
 grindstone-protection: true
+
+#Enable the ability to collect spawners
 spawner-collection: true
+
+#Enable the ability to place spawners
 spawner-place: true
+
+#Enable the ability to collect trial spawners
 trialspawner-collection: true
+
+#Enable the ability to place trial spawners
 trialspawner-place: true
 
+#When the pickaxe is given or crafted it will be given with a specific damage already
+#If 0 the pickaxe has a lifetime
 item-initial-damage: 0
+
+#Damage the pickaxe takes when picking up a spawner/trial spawner
 damage-item-value: 16
 
+#Does it require the custom pickaxe to harvest spawners?
+custom-tool-required: true
+
+#Custom Pickaxe
 recipes:
+  #enable crafting?
   enable: true
+  #Pickaxe Name (If "" use the default name)
   item-name: "&4Piccone Spawner"
+  #Object ID
+  item: "GOLDEN_PICKAXE"
+  #Incantesimi richiesti?
+  enchants-required: true
+  #List of Enchantments (It is possible to insert multiple enchantments)
+  enchants:
+    - SILK_TOUCH:2
+    #- EFFICIENCY:4
+    #- UNBREAKING:3
+  #Hide enchantments?
+  hide-enchants: true
+  #Ingredients for crafting
   crafting:
     shape:
       - "EEE"
