@@ -44,11 +44,13 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     private final JavaPlugin plugin;
     private final FileConfiguration config;
     private EntityType SpawnerEntity;
+    String version;
 
     public SpawnerManager(JavaPlugin plugin) {
         this.plugin = plugin;
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         config = YamlConfiguration.loadConfiguration(configFile);
+        version = SmartSpawner.getVersion();
     }
 
     //------------------------------------------------------------- TAB COMPLETE ---------------------------------------------------------
@@ -150,6 +152,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     public void giveTrialSpawner(Player player, String entity) {
+        if(version.equals("1.21")){
         EntityType value = null;
         try {
             value = EntityType.valueOf(entity);
@@ -164,8 +167,11 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             player.sendMessage("Hai ricevuto un TrialSpawner di " + entity);
         } catch (IllegalArgumentException e) {
             if (player != null) {
-                player.sendMessage("Entità non valida!");
+                    player.sendMessage("Entità non valida!");
             }
+        }
+    } else {
+            player.sendMessage("§cTrialSpawner è disponibile solo per versioni 1.21!");
         }
     }
 
@@ -485,13 +491,15 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             }
 
         }
-        NamespacedKey speedKey = new NamespacedKey(plugin, "attack_speed");
-        AttributeModifier attackSpeedModifier = new AttributeModifier(
-                speedKey,
-                0.0,
-                AttributeModifier.Operation.ADD_NUMBER
-        );
-        meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, attackSpeedModifier);
+        if(version.equals("1.21")) {
+            NamespacedKey speedKey = new NamespacedKey(plugin, "attack_speed");
+            AttributeModifier attackSpeedModifier = new AttributeModifier(
+                    speedKey,
+                    0.0,
+                    AttributeModifier.Operation.ADD_NUMBER
+            );
+            meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, attackSpeedModifier);
+        }
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
         return item;

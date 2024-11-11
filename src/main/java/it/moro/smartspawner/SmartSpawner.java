@@ -47,4 +47,14 @@ public final class SmartSpawner extends JavaPlugin {
         }
     }
 
+    static String getVersion() {
+        String version = Bukkit.getServer().getClass().getPackage().getName();
+        version = version.substring(version.lastIndexOf('.') + 1);
+        if(version.startsWith("v1_21")){
+            return "1.21";
+        } else {
+            return "";
+        }
+    }
+
 }

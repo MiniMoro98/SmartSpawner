@@ -2,7 +2,7 @@ name: SmartSpawner
 version: '1.0.0'
 authors: [MiniMoro]
 main: it.moro.smartspawner.SmartSpawner
-api-version: '1.21'
+api-version: '1.13'
 
 commands:
   spawnerpickaxe:
