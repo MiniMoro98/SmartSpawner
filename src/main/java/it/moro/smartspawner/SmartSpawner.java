@@ -39,21 +39,10 @@ public final class SmartSpawner extends JavaPlugin {
         }
     }
 
-
     private void ensureFileExists(File file) {
         if (!file.exists()) {
             saveResource("config.yml", false);
             getLogger().info("\u001B[32mFile " + "config.yml" + " created!\u001B[0m");
-        }
-    }
-
-    static String getVersion() {
-        String version = Bukkit.getServer().getClass().getPackage().getName();
-        version = version.substring(version.lastIndexOf('.') + 1);
-        if(version.startsWith("v1_21")){
-            return "1.21";
-        } else {
-            return "";
         }
     }
 

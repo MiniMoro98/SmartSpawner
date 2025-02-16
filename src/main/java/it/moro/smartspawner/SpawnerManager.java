@@ -73,7 +73,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         return new ArrayList<>();
     }
 
-    //------------------------------------------------------------- COMANDI ---------------------------------------------------------
+    //------------------------------------------------------------- COMMANDS ---------------------------------------------------------
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player player) {
@@ -216,6 +216,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         return false;
     }
 
+    //------------------------------------------------------------- GIVE PICKAXE ---------------------------------------------------------
     public void givePickaxe(Player player) {
         ItemStack spawnerPickaxe = createSpawnerPickaxe();
         player.getInventory().addItem(spawnerPickaxe);
@@ -224,12 +225,78 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         .replaceAll("&", "§") + "!");
     }
 
+    public ItemStack createSpawnerPickaxe() {
+        String materialName = plugin.getConfig().getString("recipes.item");
+        Material material = null;
+        try {
+            assert materialName != null;
+            material = Material.matchMaterial(materialName.toUpperCase());
+            if (material == null) {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (plugin.getConfig().getInt("item-initial-damage") != 0) {
+            if (meta instanceof Damageable damageable) {
+                damageable.setDamage(plugin.getConfig().getInt("item-initial-damage"));
+                item.setItemMeta(damageable);
+            }
+        }
+        if (!Objects.equals(plugin.getConfig().getString("recipes.item-name"), "")) {
+            String spawnerPickaxeName = Objects.requireNonNull(config.getString("recipes.item-name")).replaceAll("&", "§");
+            meta.displayName(Component.text(spawnerPickaxeName));
+        }
+        if (plugin.getConfig().getBoolean("recipes.enchants-required")) {
+            List<String> enchantments = plugin.getConfig().getStringList("recipes.enchants");
+            for (String enchant : enchantments) {
+                try {
+                    String[] parts = enchant.split(":");
+                    if (parts.length != 2) {
+                        continue;
+                    }
+                    String enchantName = parts[0];
+                    int level = Integer.parseInt(parts[1]);
+                    Enchantment enchantment = Enchantment.getByName(enchantName.toUpperCase());
+                    if (enchantment != null) {
+                        meta.addEnchant(enchantment, level, true);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            if (plugin.getConfig().getBoolean("recipes.hide-enchants")) {
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            }
+
+        }
+        if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
+            NamespacedKey speedKey = new NamespacedKey(plugin, "attack_speed");
+            AttributeModifier attackSpeedModifier = new AttributeModifier(
+                    speedKey,
+                    0.0,
+                    AttributeModifier.Operation.ADD_NUMBER
+            );
+            meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, attackSpeedModifier);
+        }
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    //------------------------------------------------------------- GIVE SPAWNER ---------------------------------------------------------
     public void giveSpawner(Player player, EntityType entity) {
-        ItemStack spawnerItem = createSpawnerItem(entity);
+        ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
+        BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
+        CreatureSpawner spawner = (CreatureSpawner) meta.getBlockState();
+        spawner.setSpawnedType(entity);
+        meta.setBlockState(spawner);
+        spawnerItem.setItemMeta(meta);
         player.getInventory().addItem(spawnerItem);
         player.sendMessage(getString("message.spawner-received") + entity);
     }
 
+    //------------------------------------------------------------- GIVE TRIALSPAWNER ---------------------------------------------------------
     public void giveTrialSpawner(Player player, EntityType entity) {
         if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
             ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
@@ -247,8 +314,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-//------------------------------------------------------------- RACCOLTA SPAWNER ---------------------------------------------------------
-
+    //------------------------------------------------------------- TRIALSPAWNER COLLECT---------------------------------------------------------
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
@@ -294,8 +360,8 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-
-    @EventHandler//(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    //------------------------------------------------------------- SPAWNER COLLECT---------------------------------------------------------
+    @EventHandler
     public void breakSpawner(BlockBreakEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
@@ -356,7 +422,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
         return false;
     }
-//------------------------------------------------------------- ANNULLO ATTACCO CON PICCONE ---------------------------------------------------------
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
@@ -371,7 +436,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    //------------------------------------------------------------- ANNULLO MODIFICA INCUDINE ---------------------------------------------------------
     @EventHandler
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         if (plugin.getConfig().getBoolean("anvil-protection")) {
@@ -400,7 +464,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    //--------------------------------------------------- VERIFICO L'ENTITA DELLO SPAWNER PRIMA DI PIAZZARLO --------------------------------------------
     @EventHandler
     public void onPlayerItemHeld(PlayerItemHeldEvent event) {
         Player player = event.getPlayer();
@@ -427,7 +490,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    //------------------------------------------------------------- PIAZZO LO SPAWNER ---------------------------------------------------------
+    //------------------------------------------------------------- SPAWNER/TRIALSPAWNER PLACE ---------------------------------------------------------
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         Block placedBlock = event.getBlock();
@@ -466,17 +529,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    private ItemStack createSpawnerItem(EntityType entityType) {
-        ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
-        BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
-        CreatureSpawner spawner = (CreatureSpawner) meta.getBlockState();
-        spawner.setSpawnedType(entityType);
-        meta.setBlockState(spawner);
-        spawnerItem.setItemMeta(meta);
-        return spawnerItem;
-    }
-
-    //------------------------------------------------------------- RICETTA / CREAZIONE PICCONE -----------------------------------------------------
+    //------------------------------------------------------------- RECIPE -----------------------------------------------------
     public void addRecipeFromConfig() {
         if (plugin.getConfig().getBoolean("recipes.enable")) {
             List<String> shape = plugin.getConfig().getStringList("recipes.crafting.shape");
@@ -494,69 +547,8 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                     recipe.setIngredient(ingredientChar, material);
                 }
             }
-
             Bukkit.addRecipe(recipe);
         }
-    }
-
-    //------------------------------------------------------------- PICCONE SPAWNER ---------------------------------------------------------
-    public ItemStack createSpawnerPickaxe() {
-        String materialName = plugin.getConfig().getString("recipes.item");
-        Material material = null;
-        try {
-            assert materialName != null;
-            material = Material.matchMaterial(materialName.toUpperCase());
-            if (material == null) {
-                return null;
-            }
-        } catch (Exception e) {
-            return null;
-        }
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (plugin.getConfig().getInt("item-initial-damage") != 0) {
-            if (meta instanceof Damageable damageable) {
-                damageable.setDamage(plugin.getConfig().getInt("item-initial-damage"));
-                item.setItemMeta(damageable);
-            }
-        }
-        if (!Objects.equals(plugin.getConfig().getString("recipes.item-name"), "")) {
-            String spawnerPickaxeName = Objects.requireNonNull(config.getString("recipes.item-name")).replaceAll("&", "§");
-            meta.displayName(Component.text(spawnerPickaxeName));
-        }
-        if (plugin.getConfig().getBoolean("recipes.enchants-required")) {
-            List<String> enchantments = plugin.getConfig().getStringList("recipes.enchants");
-            for (String enchant : enchantments) {
-                try {
-                    String[] parts = enchant.split(":");
-                    if (parts.length != 2) {
-                        continue;
-                    }
-                    String enchantName = parts[0];
-                    int level = Integer.parseInt(parts[1]);
-                    Enchantment enchantment = Enchantment.getByName(enchantName.toUpperCase());
-                    if (enchantment != null) {
-                        meta.addEnchant(enchantment, level, true);
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            if (plugin.getConfig().getBoolean("recipes.hide-enchants")) {
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            }
-
-        }
-        if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
-            NamespacedKey speedKey = new NamespacedKey(plugin, "attack_speed");
-            AttributeModifier attackSpeedModifier = new AttributeModifier(
-                    speedKey,
-                    0.0,
-                    AttributeModifier.Operation.ADD_NUMBER
-            );
-            meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, attackSpeedModifier);
-        }
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        item.setItemMeta(meta);
-        return item;
     }
 
     public String getString(String text) {
