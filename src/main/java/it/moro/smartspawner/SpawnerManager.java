@@ -44,26 +44,31 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     private final JavaPlugin plugin;
     private final FileConfiguration config;
     private EntityType SpawnerEntity;
-    String version;
 
     public SpawnerManager(JavaPlugin plugin) {
         this.plugin = plugin;
         File configFile = new File(plugin.getDataFolder(), "config.yml");
         config = YamlConfiguration.loadConfiguration(configFile);
-        version = SmartSpawner.getVersion();
     }
 
     //------------------------------------------------------------- TAB COMPLETE ---------------------------------------------------------
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
-        if (args.length == 1) {
-            List<String> entities = Arrays.stream(EntityType.values()).map(EntityType::name).map(String::toLowerCase)
-                    .toList();
-            return entities.stream().filter(e -> e.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
-        } else if (args.length == 2) {
+        if (command.getName().equalsIgnoreCase("spawnerpickaxe") && args.length == 1) {
             List<String> players = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
-            return players.stream().filter(p -> p.toLowerCase().startsWith(args[1].toLowerCase()))
+            return players.stream().filter(p -> p.toLowerCase().startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
+        }
+        if (command.getName().equalsIgnoreCase("givespawner") || command.getName().equalsIgnoreCase("givetrialspawner")) {
+            if (args.length == 1) {
+                List<String> entities = Arrays.stream(EntityType.values()).map(EntityType::name).map(String::toLowerCase)
+                        .toList();
+                return entities.stream().filter(e -> e.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
+            } else if (args.length == 2) {
+                List<String> players = Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+                return players.stream().filter(p -> p.toLowerCase().startsWith(args[1].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
         }
         return new ArrayList<>();
     }
@@ -71,62 +76,142 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     //------------------------------------------------------------- COMANDI ---------------------------------------------------------
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        Player player = (Player) sender;
-        if (command.getName().equalsIgnoreCase("spawnerpickaxe")) {
-            if (player.hasPermission("smartspawner.spawnerpickaxe")) {
-                givePickaxe(player);
-                return true;
-            } else {
-                player.sendMessage("§cNon hai il permesso per usare questo comando!");
-                return true;
-            }
-        } else if (command.getName().equalsIgnoreCase("givespawner")) {
-            if (player.hasPermission("smartspawner.givespawner")) {
-                if (args.length == 1) {
-                    if (command instanceof ConsoleCommandSender console) {
-                        console.sendMessage("§cQuesto comando è eseguibile solo dal giocatore!");
-                    } else {
-                        giveSpawner(player, args[0]);
+        if (sender instanceof Player player) {
+            if (command.getName().equalsIgnoreCase("spawnerpickaxe")) {
+                if (player.hasPermission("smartspawner.spawnerpickaxe")) {
+                    if (args.length == 0) {
+                        givePickaxe(player);
+                        return true;
+                    } else if (args.length == 1) {
+                        Player target = Bukkit.getPlayerExact(args[0]);
+                        if (target != null) {
+                            givePickaxe(target);
+                            return true;
+                        }
                     }
+                } else {
+                    player.sendMessage("§cNon hai il permesso per usare questo comando!");
                     return true;
-                } else if (args.length == 2) {
-                    Player target = Bukkit.getPlayerExact(args[1]);
-                    if (target != null) {
-                        giveSpawner(target, args[0]);
-                    } else {
-                        player.sendMessage("§cGiocatore non trovato!");
+                }
+            } else if (command.getName().equalsIgnoreCase("givespawner")) {
+                if (player.hasPermission("smartspawner.givespawner")) {
+                    if (args.length == 1) {
+                        EntityType entityType = null;
+                        try {
+                            entityType = EntityType.valueOf(args[0].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            player.sendMessage("L'entità non è stata trovata!");
+                        }
+                        if (entityType != null) {
+                            giveSpawner(player, entityType.toString());
+                            return true;
+                        }
+                    } else if (args.length == 2) {
+                        Player target = Bukkit.getPlayerExact(args[1]);
+                        EntityType entityType = null;
+                        try {
+                            entityType = EntityType.valueOf(args[0].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            player.sendMessage("L'entità non è stata trovata!");
+                        }
+                        if (target != null && entityType != null) {
+                            giveSpawner(target, entityType.toString());
+                        } else {
+                            player.sendMessage("§cGiocatore non trovato!");
+                        }
+                        return true;
                     }
+                } else {
+                    player.sendMessage("§cNon hai il permesso per usare questo comando!");
+                    return true;
+                }
+            } else if (command.getName().equalsIgnoreCase("givetrialspawner")) {
+                if (player.hasPermission("smartspawner.givetrialspawner")) {
+                    if (args.length == 1) {
+                        EntityType entityType = null;
+                        try {
+                            entityType = EntityType.valueOf(args[0].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            player.sendMessage("L'entità non è stata trovata!");
+                        }
+                        if (entityType != null) {
+                            giveTrialSpawner(player, entityType.toString());
+                            return true;
+                        }
+                    } else if (args.length == 2) {
+                        Player target = Bukkit.getPlayerExact(args[1]);
+                        EntityType entityType = null;
+                        try {
+                            entityType = EntityType.valueOf(args[0].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            player.sendMessage("L'entità non è stata trovata!");
+                        }
+                        if (target != null && entityType != null) {
+                            giveTrialSpawner(target, entityType.toString());
+                        } else {
+                            player.sendMessage("§cGiocatore non trovato!");
+                        }
+                        return true;
+                    }
+                } else {
+                    player.sendMessage("§cNon hai il permesso per usare questo comando!");
                     return true;
                 }
             } else {
-                player.sendMessage("§cNon hai il permesso per usare questo comando!");
+                player.sendMessage("§cComando non riconosciuto!");
                 return true;
             }
-        } else if (command.getName().equalsIgnoreCase("givetrialspawner")) {
-            if (player.hasPermission("smartspawner.givetrialspawner")) {
-                if (args.length == 1) {
-                    if (command instanceof ConsoleCommandSender console) {
-                        console.sendMessage("§cQuesto comando è eseguibile solo dal giocatore!");
+
+        } else if (sender instanceof ConsoleCommandSender) {
+            if (command.getName().equalsIgnoreCase("spawnerpickaxe")) {
+                if(args.length == 1) {
+                    Player player = Bukkit.getPlayerExact(args[0]);
+                    if (player != null) {
+                        givePickaxe(player);
                     } else {
-                        giveTrialSpawner(player, args[0]);
+                        plugin.getLogger().info("Il giocatore non è stato trovato!");
                     }
                     return true;
-                } else if (args.length == 2) {
-                    Player target = Bukkit.getPlayerExact(args[1]);
-                    if (target != null) {
-                        giveTrialSpawner(target, args[0]);
-                    } else {
-                        player.sendMessage("§cGiocatore non trovato!");
-                    }
-                    return true;
+                } else {
+                    plugin.getLogger().info("Giocatore mancante!");
                 }
-            } else {
-                player.sendMessage("§cNon hai il permesso per usare questo comando!");
-                return true;
+            } else if (command.getName().equalsIgnoreCase("givespawner")) {
+                if(args.length == 2) {
+                    Player player = Bukkit.getPlayerExact(args[1]);
+                    EntityType entityType = null;
+                    try {
+                        entityType = EntityType.valueOf(args[0].toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().info("L'entità non è stata trovata!");
+                    }
+                    if (player != null && entityType != null) {
+                        giveSpawner(player, entityType.toString());
+                        return true;
+                    } else {
+                        plugin.getLogger().info("Il giocatore non è stato trovato!");
+                    }
+                } else {
+                    plugin.getLogger().info("Giocatore o entità mancante!");
+                }
+            } else if (command.getName().equalsIgnoreCase("givetrialspawner")) {
+                if(args.length == 2) {
+                    Player player = Bukkit.getPlayerExact(args[1]);
+                    EntityType entityType = null;
+                    try {
+                        entityType = EntityType.valueOf(args[0].toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().info("L'entità non è stata trovata!");
+                    }
+                    if (player != null && entityType != null) {
+                        giveTrialSpawner(player, entityType.toString());
+                        return true;
+                    } else {
+                        plugin.getLogger().info("Il giocatore non è stato trovato!");
+                    }
+                } else {
+                    plugin.getLogger().info("Giocatore o entità mancante!");
+                }
             }
-        } else {
-            player.sendMessage("§cComando non riconosciuto!");
-            return true;
         }
         return false;
     }
@@ -152,30 +237,30 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     public void giveTrialSpawner(Player player, String entity) {
-        if(version.equals("1.21")){
-        EntityType value = null;
-        try {
-            value = EntityType.valueOf(entity);
-            ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
-            BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
-            TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
-            TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
-            SpawnerConf.setSpawnedType(value);
-            metaSpawner.setBlockState((BlockState) StateSpawner);
-            spawner.setItemMeta((ItemMeta) metaSpawner);
-            player.getInventory().addItem(spawner);
-            player.sendMessage("Hai ricevuto un TrialSpawner di " + entity);
-        } catch (IllegalArgumentException e) {
-            if (player != null) {
+        if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
+            EntityType value;
+            try {
+                value = EntityType.valueOf(entity);
+                ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
+                BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
+                TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
+                TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
+                SpawnerConf.setSpawnedType(value);
+                metaSpawner.setBlockState(StateSpawner);
+                spawner.setItemMeta(metaSpawner);
+                player.getInventory().addItem(spawner);
+                player.sendMessage("Hai ricevuto un TrialSpawner di " + entity);
+            } catch (IllegalArgumentException e) {
+                if (player != null) {
                     player.sendMessage("Entità non valida!");
+                }
             }
-        }
-    } else {
+        } else {
             player.sendMessage("§cTrialSpawner è disponibile solo per versioni 1.21!");
         }
     }
 
-    //------------------------------------------------------------- RACCOLTA SPAWNER ---------------------------------------------------------
+//------------------------------------------------------------- RACCOLTA SPAWNER ---------------------------------------------------------
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -183,10 +268,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         Block block = event.getClickedBlock();
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (isEqualsItem(item, createSpawnerPickaxe())
-                /*item.getType() == Material.GOLDEN_PICKAXE &&
-                item.getItemMeta().getEnchants().containsKey(Enchantment.SILK_TOUCH) &&
-                item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2*/ ||
+        if (isEqualsItem(item, createSpawnerPickaxe()) ||
                 !plugin.getConfig().getBoolean("custom-tool-required") &&
                         item.getType().name().contains("PICKAXE")) {
             if (block.getType() == Material.TRIAL_SPAWNER) {
@@ -201,7 +283,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                                 if (spawnerconfig.getSpawnedType() == null) {
                                     return;
                                 }
-                                meta.setBlockState((BlockState) spawner);
+                                meta.setBlockState(spawner);
                                 spawnerItem.setItemMeta(meta);
                                 block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
                                 block.setType(Material.AIR);
@@ -231,10 +313,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if ( isEqualsItem(item, createSpawnerPickaxe())
-                /*item.getType() == Material.GOLDEN_PICKAXE &&
-                item.getItemMeta().getEnchants().containsKey(Enchantment.SILK_TOUCH) &&
-                item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2*/ ||
+        if (isEqualsItem(item, createSpawnerPickaxe()) ||
                 !plugin.getConfig().getBoolean("custom-tool-required") &&
                         item.getType().name().contains("PICKAXE")) {
             if (block.getType() == Material.SPAWNER) {
@@ -257,7 +336,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                                     player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
                                 } else {
                                     damageable.setDamage(damageable.getDamage() + plugin.getConfig().getInt("damage-item-value") - 1);
-                                    event.getPlayer().getInventory().getItemInMainHand().setItemMeta((ItemMeta) damageable);
+                                    event.getPlayer().getInventory().getItemInMainHand().setItemMeta(damageable);
                                 }
                             }
                         }
@@ -274,9 +353,10 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             ItemMeta itemMeta = item.getItemMeta();
             ItemMeta pickaxeMeta = pickaxe.getItemMeta();
             if (itemMeta != null || pickaxeMeta != null) {
+                assert itemMeta != null;
                 if (Objects.equals(itemMeta.displayName(), pickaxeMeta.displayName())) {
                     if (Objects.equals(itemMeta.displayName(), pickaxeMeta.displayName())) {
-                        if(plugin.getConfig().getBoolean("recipes.enchants-required")) {
+                        if (plugin.getConfig().getBoolean("recipes.enchants-required")) {
                             Map<Enchantment, Integer> itemEnchants = itemMeta.getEnchants();
                             Map<Enchantment, Integer> pickaxeEnchants = pickaxeMeta.getEnchants();
                             return Objects.equals(itemEnchants, pickaxeEnchants);
@@ -462,11 +542,11 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                 item.setItemMeta(damageable);
             }
         }
-        if(!Objects.equals(plugin.getConfig().getString("recipes.item-name"), "")) {
+        if (!Objects.equals(plugin.getConfig().getString("recipes.item-name"), "")) {
             String spawnerPickaxeName = Objects.requireNonNull(config.getString("recipes.item-name")).replaceAll("&", "§");
             meta.displayName(Component.text(spawnerPickaxeName));
         }
-        if(plugin.getConfig().getBoolean("recipes.enchants-required")){
+        if (plugin.getConfig().getBoolean("recipes.enchants-required")) {
             List<String> enchantments = plugin.getConfig().getStringList("recipes.enchants");
             for (String enchant : enchantments) {
                 try {
@@ -486,12 +566,12 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                     System.out.println("Livello incantesimo non valido in: " + enchant);
                 }
             }
-            if(plugin.getConfig().getBoolean("recipes.hide-enchants")){
+            if (plugin.getConfig().getBoolean("recipes.hide-enchants")) {
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             }
 
         }
-        if(version.equals("1.21")) {
+        if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
             NamespacedKey speedKey = new NamespacedKey(plugin, "attack_speed");
             AttributeModifier attackSpeedModifier = new AttributeModifier(
                     speedKey,

@@ -7,13 +7,13 @@ api-version: '1.13'
 commands:
   spawnerpickaxe:
     description: Give Spawner Pickaxe
-    usage: /spawnerpickaxe
+    usage: /spawnerpickaxe [player]
   givespawner:
     description: Give Spawner
-    usage: /givespawner
+    usage: /givespawner [entity] [player]
   givetrialspawner:
     description: Give Spawner
-    usage: /givetrialspawner
+    usage: /givetrialspawner [entity] [player]
 
 permissions:
   smartspawner.*:
@@ -35,7 +35,7 @@ permissions:
     description: Permission to use /givetrialspawner [entity]
     default: op
   smartspawner.spawnerpickaxe:
-    description: Permission to use /spawnerpickaxe command
+    description: Permission to use /spawnerpickaxe [player]
     default: op
   smartspawner.spawner.break:
     description: Permission to collect spawner
