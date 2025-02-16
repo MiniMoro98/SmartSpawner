@@ -90,7 +90,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         }
                     }
                 } else {
-                    player.sendMessage("§cNon hai il permesso per usare questo comando!");
+                    player.sendMessage(getString("message.no-perm"));
                     return true;
                 }
             } else if (command.getName().equalsIgnoreCase("givespawner")) {
@@ -100,10 +100,10 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         try {
                             entityType = EntityType.valueOf(args[0].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            player.sendMessage("L'entità non è stata trovata!");
+                            player.sendMessage(getString("message.no-entity"));
                         }
                         if (entityType != null) {
-                            giveSpawner(player, entityType.toString());
+                            giveSpawner(player, entityType);
                             return true;
                         }
                     } else if (args.length == 2) {
@@ -112,17 +112,17 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         try {
                             entityType = EntityType.valueOf(args[0].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            player.sendMessage("L'entità non è stata trovata!");
+                            player.sendMessage(getString("message.no-entity"));
                         }
                         if (target != null && entityType != null) {
-                            giveSpawner(target, entityType.toString());
+                            giveSpawner(target, entityType);
                         } else {
-                            player.sendMessage("§cGiocatore non trovato!");
+                            player.sendMessage(getString("message.no-player"));
                         }
                         return true;
                     }
                 } else {
-                    player.sendMessage("§cNon hai il permesso per usare questo comando!");
+                    player.sendMessage(getString("message.no-perm"));
                     return true;
                 }
             } else if (command.getName().equalsIgnoreCase("givetrialspawner")) {
@@ -132,10 +132,10 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         try {
                             entityType = EntityType.valueOf(args[0].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            player.sendMessage("L'entità non è stata trovata!");
+                            player.sendMessage(getString("message.no-entity"));
                         }
                         if (entityType != null) {
-                            giveTrialSpawner(player, entityType.toString());
+                            giveTrialSpawner(player, entityType);
                             return true;
                         }
                     } else if (args.length == 2) {
@@ -144,72 +144,72 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         try {
                             entityType = EntityType.valueOf(args[0].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            player.sendMessage("L'entità non è stata trovata!");
+                            player.sendMessage(getString("message.no-entity"));
                         }
                         if (target != null && entityType != null) {
-                            giveTrialSpawner(target, entityType.toString());
+                            giveTrialSpawner(target, entityType);
                         } else {
-                            player.sendMessage("§cGiocatore non trovato!");
+                            player.sendMessage(getString("message.no-player"));
                         }
                         return true;
                     }
                 } else {
-                    player.sendMessage("§cNon hai il permesso per usare questo comando!");
+                    player.sendMessage(getString(getString("message.no-player")));
                     return true;
                 }
             } else {
-                player.sendMessage("§cComando non riconosciuto!");
+                player.sendMessage(getString("message.no-command"));
                 return true;
             }
 
         } else if (sender instanceof ConsoleCommandSender) {
             if (command.getName().equalsIgnoreCase("spawnerpickaxe")) {
-                if(args.length == 1) {
+                if (args.length == 1) {
                     Player player = Bukkit.getPlayerExact(args[0]);
                     if (player != null) {
                         givePickaxe(player);
                     } else {
-                        plugin.getLogger().info("Il giocatore non è stato trovato!");
+                        plugin.getLogger().info(getString("message.no-player"));
                     }
                     return true;
                 } else {
-                    plugin.getLogger().info("Giocatore mancante!");
+                    plugin.getLogger().info(getString("message.no-player"));
                 }
             } else if (command.getName().equalsIgnoreCase("givespawner")) {
-                if(args.length == 2) {
+                if (args.length == 2) {
                     Player player = Bukkit.getPlayerExact(args[1]);
                     EntityType entityType = null;
                     try {
                         entityType = EntityType.valueOf(args[0].toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        plugin.getLogger().info("L'entità non è stata trovata!");
+                        plugin.getLogger().info(getString("message.no-entity"));
                     }
                     if (player != null && entityType != null) {
-                        giveSpawner(player, entityType.toString());
+                        giveSpawner(player, entityType);
                         return true;
                     } else {
-                        plugin.getLogger().info("Il giocatore non è stato trovato!");
+                        plugin.getLogger().info(getString("message.no-player"));
                     }
                 } else {
-                    plugin.getLogger().info("Giocatore o entità mancante!");
+                    plugin.getLogger().info(getString("message.no-args"));
                 }
             } else if (command.getName().equalsIgnoreCase("givetrialspawner")) {
-                if(args.length == 2) {
+                if (args.length == 2) {
                     Player player = Bukkit.getPlayerExact(args[1]);
                     EntityType entityType = null;
                     try {
                         entityType = EntityType.valueOf(args[0].toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        plugin.getLogger().info("L'entità non è stata trovata!");
+                        plugin.getLogger().info(getString("message.no-entity"));
                     }
                     if (player != null && entityType != null) {
-                        giveTrialSpawner(player, entityType.toString());
+                        giveTrialSpawner(player, entityType);
                         return true;
                     } else {
-                        plugin.getLogger().info("Il giocatore non è stato trovato!");
+                        plugin.getLogger().info(getString("message.no-player"));
                     }
                 } else {
-                    plugin.getLogger().info("Giocatore o entità mancante!");
+                    plugin.getLogger().info(getString("message.no-args"));
                 }
             }
         }
@@ -224,39 +224,26 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         .replaceAll("&", "§") + "!");
     }
 
-    public void giveSpawner(Player player, String entity) {
-        EntityType entityType = null;
-        try {
-            entityType = EntityType.valueOf(entity.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            player.sendMessage("Tipo entità non valido.");
-        }
-        ItemStack spawnerItem = createSpawnerItem(entityType);
+    public void giveSpawner(Player player, EntityType entity) {
+        ItemStack spawnerItem = createSpawnerItem(entity);
         player.getInventory().addItem(spawnerItem);
-        player.sendMessage("Hai ricevuto uno Spawner di " + entity);
+        player.sendMessage(getString("message.spawner-received") + entity);
     }
 
-    public void giveTrialSpawner(Player player, String entity) {
+    public void giveTrialSpawner(Player player, EntityType entity) {
         if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
-            EntityType value;
-            try {
-                value = EntityType.valueOf(entity);
-                ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
-                BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
-                TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
-                TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
-                SpawnerConf.setSpawnedType(value);
-                metaSpawner.setBlockState(StateSpawner);
-                spawner.setItemMeta(metaSpawner);
-                player.getInventory().addItem(spawner);
-                player.sendMessage("Hai ricevuto un TrialSpawner di " + entity);
-            } catch (IllegalArgumentException e) {
-                if (player != null) {
-                    player.sendMessage("Entità non valida!");
-                }
-            }
+            ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
+            BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
+            TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
+            TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
+            SpawnerConf.setRequiredPlayerRange(plugin.getConfig().getInt("trialspawner-activation-distance"));
+            SpawnerConf.setSpawnedType(entity);
+            metaSpawner.setBlockState(StateSpawner);
+            spawner.setItemMeta(metaSpawner);
+            player.getInventory().addItem(spawner);
+            player.sendMessage(getString("message.trialspawner-received") + entity);
         } else {
-            player.sendMessage("§cTrialSpawner è disponibile solo per versioni 1.21!");
+            player.sendMessage(getString("message.incompatible-version"));
         }
     }
 
@@ -494,26 +481,17 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         if (plugin.getConfig().getBoolean("recipes.enable")) {
             List<String> shape = plugin.getConfig().getStringList("recipes.crafting.shape");
             ItemStack item = createSpawnerPickaxe();
-            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(plugin, "piccone_spawner"), item);
-
-            // Imposta la forma della ricetta
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(plugin, "spawner_pickaxe"), item);
             recipe.shape(shape.toArray(new String[0]));
-
-            // Controlla se la sezione ingredients esiste
             ConfigurationSection ingredients = plugin.getConfig().getConfigurationSection("recipes.crafting.ingredients");
             if (ingredients == null) {
-                plugin.getLogger().warning("La sezione ingredients non è definita nel file di configurazione.");
                 return;
             }
-
-            // Imposta gli ingredienti
             for (String keyChar : ingredients.getKeys(false)) {
                 char ingredientChar = keyChar.charAt(0);
                 Material material = Material.getMaterial(Objects.requireNonNull(ingredients.getString(keyChar)));
                 if (material != null) {
                     recipe.setIngredient(ingredientChar, material);
-                } else {
-                    plugin.getLogger().warning("Materiale non valido per l'ingrediente: " + ingredients.getString(keyChar));
                 }
             }
 
@@ -559,12 +537,8 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                     Enchantment enchantment = Enchantment.getByName(enchantName.toUpperCase());
                     if (enchantment != null) {
                         meta.addEnchant(enchantment, level, true);
-                    } else {
-                        System.out.println("Incantesimo '" + enchantName + "' non trovato.");
                     }
-                } catch (NumberFormatException e) {
-                    System.out.println("Livello incantesimo non valido in: " + enchant);
-                }
+                } catch (NumberFormatException ignored) {}
             }
             if (plugin.getConfig().getBoolean("recipes.hide-enchants")) {
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -583,6 +557,10 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
         return item;
+    }
+
+    public String getString(String text) {
+        return Objects.requireNonNull(plugin.getConfig().getString(text)).replaceAll("&", "§");
     }
 
 }

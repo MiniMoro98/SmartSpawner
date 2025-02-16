@@ -16,6 +16,9 @@ trialspawner-collection: true
 #Enable the ability to place trial spawners
 trialspawner-place: true
 
+#Trialspawner activation distance
+trialspawner-activation-distance: 8
+
 #When the pickaxe is given or crafted it will be given with a specific damage already
 #If 0 the pickaxe has a lifetime
 item-initial-damage: 0
@@ -31,10 +34,10 @@ recipes:
   #enable crafting?
   enable: true
   #Pickaxe Name (If "" use the default name)
-  item-name: "&4Piccone Spawner"
+  item-name: "&4Spawner Pickaxe"
   #Object ID
   item: "GOLDEN_PICKAXE"
-  #Incantesimi richiesti?
+  #Spells required?
   enchants-required: true
   #List of Enchantments (It is possible to insert multiple enchantments)
   enchants:
@@ -52,3 +55,13 @@ recipes:
     ingredients:
       E: "EMERALD"
       S: "STICK"
+
+message:
+  no-perm: "&cYou do not have permission to use this command"
+  no-entity: "&cThe entity was not found!"
+  no-player: "&cPlayer not found!"
+  no-command: "&c&cCommand not recognized!"
+  no-args: "&cPlayer or entity missing!"
+  spawner-received: "&aYou have received a Spawner of "
+  trialspawner-received: "&aYou have received a TrialSpawner of "
+  incompatible-version: "&cTrialSpawner is only available for versions higher than 1.21!"
