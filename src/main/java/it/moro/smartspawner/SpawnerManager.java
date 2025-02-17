@@ -1,6 +1,7 @@
 package it.moro.smartspawner;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
@@ -30,6 +31,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.spawner.TrialSpawnerConfiguration;
@@ -221,7 +223,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         ItemStack spawnerPickaxe = createSpawnerPickaxe();
         player.getInventory().addItem(spawnerPickaxe);
         player.sendMessage(
-                "Hai ricevuto: " + Objects.requireNonNull(config.getString("recipes.item-name"))
+                getString("message.pickaxe-received") + Objects.requireNonNull(config.getString("recipes.item-name"))
                         .replaceAll("&", "§") + "!");
     }
 
@@ -263,7 +265,8 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                     if (enchantment != null) {
                         meta.addEnchant(enchantment, level, true);
                     }
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
             }
             if (plugin.getConfig().getBoolean("recipes.hide-enchants")) {
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -299,20 +302,25 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     //------------------------------------------------------------- GIVE TRIALSPAWNER ---------------------------------------------------------
     public void giveTrialSpawner(Player player, EntityType entity) {
         if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
-            ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
-            BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
-            TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
-            TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
-            SpawnerConf.setRequiredPlayerRange(plugin.getConfig().getInt("trialspawner-activation-distance"));
-            SpawnerConf.setSpawnedType(entity);
-            metaSpawner.setBlockState(StateSpawner);
-            spawner.setItemMeta(metaSpawner);
-            player.getInventory().addItem(spawner);
+            player.getInventory().addItem(TrialSpawner(entity));
             player.sendMessage(getString("message.trialspawner-received") + entity);
         } else {
             player.sendMessage(getString("message.incompatible-version"));
         }
     }
+
+    public ItemStack TrialSpawner(EntityType entity){
+        ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
+        BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
+        TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
+        TrialSpawnerConfiguration SpawnerConf = StateSpawner.getNormalConfiguration();
+        SpawnerConf.setRequiredPlayerRange(plugin.getConfig().getInt("trialspawner-activation-distance"));
+        SpawnerConf.setSpawnedType(entity);
+        metaSpawner.setBlockState(StateSpawner);
+        spawner.setItemMeta(metaSpawner);
+        return spawner;
+    }
+
 
     //------------------------------------------------------------- TRIALSPAWNER COLLECT---------------------------------------------------------
     @EventHandler
@@ -321,9 +329,8 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         Block block = event.getClickedBlock();
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (isEqualsItem(item, createSpawnerPickaxe()) ||
-                !plugin.getConfig().getBoolean("custom-tool-required") &&
-                        item.getType().name().contains("PICKAXE")) {
+        if (isEqualsItem(item, createSpawnerPickaxe()) || !plugin.getConfig().getBoolean("custom-tool-required") &&
+                item.getType().name().contains("PICKAXE")) {
             if (block.getType() == Material.TRIAL_SPAWNER) {
                 if (plugin.getConfig().getBoolean("trialspawner-collection")) {
                     new BukkitRunnable() {
@@ -331,25 +338,24 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                         public void run() {
                             if (block.getState() instanceof TrialSpawner spawner) {
                                 TrialSpawnerConfiguration spawnerconfig = spawner.getNormalConfiguration();
-                                ItemStack spawnerItem = new ItemStack(Material.TRIAL_SPAWNER);
-                                BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
                                 if (spawnerconfig.getSpawnedType() == null) {
                                     return;
                                 }
-                                meta.setBlockState(spawner);
-                                spawnerItem.setItemMeta(meta);
-                                block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
+                                block.getWorld().dropItemNaturally(block.getLocation(), TrialSpawner(spawnerconfig.getSpawnedType()));
                                 block.setType(Material.AIR);
+                                block.getState().update(true, false);
                                 player.playSound(block.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 1.0f);
                                 block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation(), 20, Material.TRIAL_SPAWNER.createBlockData());
                                 if (event.getPlayer().getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
                                     ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
-                                    if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value") + 1) {
+                                    int damageValue = plugin.getConfig().getInt("damage-item-value");
+
+                                    if (hand.getType().getMaxDurability() - damageable.getDamage() < damageValue + 1) {
                                         player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
                                         player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
                                     } else {
-                                        damageable.setDamage(damageable.getDamage() + plugin.getConfig().getInt("damage-item-value"));
-                                        event.getPlayer().getInventory().getItemInMainHand().setItemMeta((ItemMeta) damageable);
+                                        damageable.setDamage(damageable.getDamage() + damageValue);
+                                        hand.setItemMeta(damageable);
                                     }
                                 }
                             }
@@ -469,7 +475,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         Player player = event.getPlayer();
         ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
         if (newItem != null && newItem.getType() == Material.SPAWNER) {
-
             if (newItem.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
                 BlockState blockState = blockStateMeta.getBlockState();
 
@@ -495,39 +500,17 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     public void onBlockPlace(BlockPlaceEvent event) {
         Block placedBlock = event.getBlock();
         if (placedBlock.getType() == Material.SPAWNER) {
-            if (plugin.getConfig().getBoolean("spawner-place")) {
-                if (SpawnerEntity != null) {
-                    World world = placedBlock.getWorld();
-                    int x = placedBlock.getX();
-                    int y = placedBlock.getY();
-                    int z = placedBlock.getZ();
-                    Block block = world.getBlockAt(x, y, z);
-                    block.setType(Material.SPAWNER);
-                    CreatureSpawner spawner = (CreatureSpawner) block.getState();
-                    spawner.setSpawnedType(SpawnerEntity);
-                    spawner.update();
-                }
+            if(!plugin.getConfig().getBoolean("spawner-place")){
+                event.setCancelled(true);
             }
         } else if (placedBlock.getType() == Material.TRIAL_SPAWNER) {
-            if (plugin.getConfig().getBoolean("trialspawner-place")) {
-                if (SpawnerEntity != null) {
-                    ItemStack placed = event.getItemInHand();
-                    BlockStateMeta hand_meta = (BlockStateMeta) placed.getItemMeta();
-                    TrialSpawner cs = (TrialSpawner) hand_meta.getBlockState();
-                    TrialSpawnerConfiguration spawnerConfig = cs.getNormalConfiguration();
-                    try {
-                        EntityType entity = spawnerConfig.getSpawnedType();
-                        TrialSpawner spawner = (TrialSpawner) placedBlock.getState();
-                        TrialSpawnerConfiguration sc = spawner.getNormalConfiguration();
-                        sc.setSpawnedType(entity);
-                        spawner.update(true, false);
-
-                    } catch (Exception ignored) {
-                    }
-                }
+            if(!plugin.getConfig().getBoolean("trialspawner-place")){
+                event.setCancelled(true);
             }
         }
     }
+
+
 
     //------------------------------------------------------------- RECIPE -----------------------------------------------------
     public void addRecipeFromConfig() {

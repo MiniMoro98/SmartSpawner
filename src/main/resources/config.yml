@@ -64,4 +64,5 @@ message:
   no-args: "&cPlayer or entity missing!"
   spawner-received: "&aYou have received a Spawner of "
   trialspawner-received: "&aYou have received a TrialSpawner of "
+  pickaxe-received: "You have received: "
   incompatible-version: "&cTrialSpawner is only available for versions higher than 1.21!"

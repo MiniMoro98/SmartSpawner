@@ -1,5 +1,5 @@
 name: SmartSpawner
-version: '1.0.0'
+version: ${project.version}
 authors: [MiniMoro]
 main: it.moro.smartspawner.SmartSpawner
 api-version: '1.13'
