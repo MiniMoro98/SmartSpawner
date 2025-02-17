@@ -1,12 +1,10 @@
 package it.moro.smartspawner;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.TrialSpawner;
 import org.bukkit.command.*;
@@ -23,7 +21,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.inventory.PrepareGrindstoneEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -31,12 +28,10 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.spawner.TrialSpawnerConfiguration;
 import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,7 +40,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
 
     private final JavaPlugin plugin;
     private final FileConfiguration config;
-    private EntityType SpawnerEntity;
 
     public SpawnerManager(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -466,31 +460,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             ItemStack secondItem = event.getInventory().getItem(1);
             if (isItemProtected(firstItem) || isItemProtected(secondItem)) {
                 event.setResult(null);
-            }
-        }
-    }
-
-    @EventHandler
-    public void onPlayerItemHeld(PlayerItemHeldEvent event) {
-        Player player = event.getPlayer();
-        ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
-        if (newItem != null && newItem.getType() == Material.SPAWNER) {
-            if (newItem.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
-                BlockState blockState = blockStateMeta.getBlockState();
-
-                if (blockState instanceof CreatureSpawner spawner) {
-                    EntityType entityType = spawner.getSpawnedType();
-                    SpawnerEntity = Objects.requireNonNullElse(entityType, EntityType.PIG);
-                }
-            }
-        } else if (newItem != null && newItem.getType() == Material.TRIAL_SPAWNER) {
-            if (newItem.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
-                BlockState blockState = blockStateMeta.getBlockState();
-                if (blockState instanceof TrialSpawner spawner) {
-                    TrialSpawnerConfiguration spawnerconfig = spawner.getNormalConfiguration();
-                    EntityType entityType = spawnerconfig.getSpawnedType();
-                    SpawnerEntity = Objects.requireNonNullElse(entityType, EntityType.PIG);
-                }
             }
         }
     }
