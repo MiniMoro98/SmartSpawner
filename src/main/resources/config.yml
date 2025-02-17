@@ -24,6 +24,7 @@ trialspawner-activation-distance: 8
 item-initial-damage: 0
 
 #Damage the pickaxe takes when picking up a spawner/trial spawner
+#With 16 damage the pickaxe can collect 2 spawners with GOLDEN_PICKAXE
 damage-item-value: 16
 
 #Does it require the custom pickaxe to harvest spawners?
@@ -62,7 +63,9 @@ message:
   no-player: "&cPlayer not found!"
   no-command: "&c&cCommand not recognized!"
   no-args: "&cPlayer or entity missing!"
+  no-place: "&cYou do not have permission to place this item"
+  no-break: "&cYou are not allowed to pick up this item"
   spawner-received: "&aYou have received a Spawner of "
   trialspawner-received: "&aYou have received a TrialSpawner of "
-  pickaxe-received: "You have received: "
+  pickaxe-received: "&aYou have received: "
   incompatible-version: "&cTrialSpawner is only available for versions higher than 1.21!"
