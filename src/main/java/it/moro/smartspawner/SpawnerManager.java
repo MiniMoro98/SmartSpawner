@@ -5,6 +5,7 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.TrialSpawner;
 import org.bukkit.command.*;
@@ -32,6 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.spawner.TrialSpawnerConfiguration;
 import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -303,7 +305,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    public ItemStack TrialSpawner(EntityType entity){
+    public ItemStack TrialSpawner(EntityType entity) {
         ItemStack spawner = new ItemStack(Material.TRIAL_SPAWNER);
         BlockStateMeta metaSpawner = (BlockStateMeta) spawner.getItemMeta();
         TrialSpawner StateSpawner = (TrialSpawner) metaSpawner.getBlockState();
@@ -464,16 +466,36 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    //------------------------------------------------------------- SPAWNER/TRIALSPAWNER PLACE ---------------------------------------------------------
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        Block placedBlock = event.getBlock();
-        if (placedBlock.getType() == Material.SPAWNER) {
-            if(!plugin.getConfig().getBoolean("spawner-place")){
+        Block block = event.getBlockPlaced();
+        if (block.getType() == Material.SPAWNER) {
+            if (plugin.getConfig().getBoolean("spawner-place")) {
+                if (event.getItemInHand().getItemMeta() instanceof BlockStateMeta meta) {
+                    BlockState blockState = meta.getBlockState();
+                    if (blockState instanceof CreatureSpawner spawner) {
+                        EntityType entityType = spawner.getSpawnedType();
+                        CreatureSpawner placedSpawner = (CreatureSpawner) block.getState();
+                        placedSpawner.setSpawnedType(entityType);
+                        placedSpawner.update();
+                    }
+                }
+            } else {
                 event.setCancelled(true);
             }
-        } else if (placedBlock.getType() == Material.TRIAL_SPAWNER) {
-            if(!plugin.getConfig().getBoolean("trialspawner-place")){
+        } else if (block.getType() == Material.TRIAL_SPAWNER) {
+            if (!plugin.getConfig().getBoolean("trialspawner-place")) {
+                if (event.getItemInHand().getItemMeta() instanceof BlockStateMeta meta) {
+                    BlockState blockState = meta.getBlockState();
+                    if (blockState instanceof TrialSpawner trialSpawner) {
+                        TrialSpawnerConfiguration config = trialSpawner.getNormalConfiguration();
+                        EntityType entityType = config.getSpawnedType();
+                        TrialSpawner placedTrialSpawner = (TrialSpawner) block.getState();
+                        placedTrialSpawner.getNormalConfiguration().setSpawnedType(entityType);
+                        placedTrialSpawner.update(true, false);
+                    }
+                }
+            } else {
                 event.setCancelled(true);
             }
         }
