@@ -30,7 +30,6 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.SpawnEggMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.spawner.TrialSpawnerConfiguration;
@@ -73,7 +72,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         return new ArrayList<>();
     }
 
-    //------------------------------------------------------------- COMMANDS ---------------------------------------------------------
+    //------------------------------------------------------ COMMANDS + PERMISSIONS----------------------------------------------
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (sender instanceof Player player) {
@@ -216,7 +215,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         return false;
     }
 
-    //------------------------------------------------------------- GIVE PICKAXE ---------------------------------------------------------
+    //--------------------------------------------------- GIVE PICKAXE + PERMISSIONS ----------------------------------------------
     public void givePickaxe(Player player) {
         ItemStack spawnerPickaxe = createSpawnerPickaxe();
         player.getInventory().addItem(spawnerPickaxe);
@@ -285,7 +284,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         return item;
     }
 
-    //------------------------------------------------------------- GIVE SPAWNER ---------------------------------------------------------
+    //------------------------------------------------------ GIVE SPAWNER + PERMISSIONS ---------------------------------------------------
     public void giveSpawner(Player player, EntityType entity) {
         ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
         BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
@@ -297,7 +296,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         player.sendMessage(getString("message.spawner-received") + entity);
     }
 
-    //------------------------------------------------------------- GIVE TRIALSPAWNER ---------------------------------------------------------
+    //-------------------------------------------------- GIVE TRIALSPAWNER  + PERMISSIONS--------------------------------------------------
     public void giveTrialSpawner(Player player, EntityType entity) {
         if (Bukkit.getBukkitVersion().startsWith("1_21") || Bukkit.getBukkitVersion().startsWith("1.21")) {
             player.getInventory().addItem(TrialSpawner(entity));
@@ -320,7 +319,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     }
 
 
-    //------------------------------------------------------------- TRIALSPAWNER COLLECT---------------------------------------------------------
+    //-------------------------------------------------- TRIALSPAWNER COLLECT + PERMISSIONS ---------------------------------------------------
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
@@ -368,7 +367,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-    //------------------------------------------------------------- SPAWNER COLLECT---------------------------------------------------------
+    //------------------------------------------------------ SPAWNER COLLECT + PERMISSIONS ---------------------------------------------------------
     @EventHandler
     public void breakSpawner(BlockBreakEvent event) {
         Block block = event.getBlock();
@@ -414,6 +413,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
+    //--------------------------------------------------- EGG SPAWN USE + PERMISSIONS------------------------------------------------
     @EventHandler
     public void onPlayerUseSpawnEgg(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -431,7 +431,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
-
+    //------------------------------------------------------------- OTHER ---------------------------------------------------------
     public boolean isEqualsItem(ItemStack item, ItemStack pickaxe) {
         if (Objects.equals(item.getType(), pickaxe.getType())) {
             ItemMeta itemMeta = item.getItemMeta();
@@ -454,6 +454,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         return false;
     }
 
+    //---------------------------------------------------- PRESERVE PICKAXE DAMAGE ------------------------------------------------
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player) {
@@ -467,6 +468,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
+    //---------------------------------------------------- PRESERVE PICKAXE ON ANVIL -----------------------------------------------
     @EventHandler
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         if (plugin.getConfig().getBoolean("anvil-protection")) {
@@ -484,6 +486,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                 && item.getItemMeta().getEnchantLevel(Enchantment.SILK_TOUCH) == 2;
     }
 
+    //----------------------------------------------- PRESERVE PICKAXE ON GRINDSTONE -----------------------------------------------
     @EventHandler
     public void onPrepareGrindstone(PrepareGrindstoneEvent event) {
         if (plugin.getConfig().getBoolean("grindstone-protection")) {
@@ -495,6 +498,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
+    //--------------------------------------------- SET ENTITY ON PLACE + PERMISSIONS ---------------------------------------------
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
@@ -564,6 +568,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         }
     }
 
+    //----------------------------------------------- EXTRACT MESSAGE FROM CONFIG -----------------------------------------------
     public String getString(String text) {
         return Objects.requireNonNull(plugin.getConfig().getString(text)).replaceAll("&", "§");
     }
