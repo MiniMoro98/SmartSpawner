@@ -16,6 +16,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -29,6 +30,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.SpawnEggMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.spawner.TrialSpawnerConfiguration;
@@ -155,7 +157,7 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
                     player.sendMessage(getString("message.no-perm"));
                     return true;
                 }
-            }   else {
+            } else {
                 player.sendMessage(getString("message.no-command"));
                 return true;
             }
@@ -411,6 +413,24 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             }
         }
     }
+
+    @EventHandler
+    public void onPlayerUseSpawnEgg(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Block block = event.getClickedBlock();
+        if (block == null) return;
+        Player player = event.getPlayer();
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (block.getType() == Material.SPAWNER || block.getType() == Material.TRIAL_SPAWNER) {
+            if (item.getType().toString().contains("_SPAWN_EGG")) {
+                if (!player.hasPermission("smartspawner.egg.use")) {
+                    player.sendMessage(getString("message.no-spawn-egg-use"));
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
 
     public boolean isEqualsItem(ItemStack item, ItemStack pickaxe) {
         if (Objects.equals(item.getType(), pickaxe.getType())) {

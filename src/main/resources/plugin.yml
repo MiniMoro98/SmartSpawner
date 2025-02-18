@@ -27,6 +27,7 @@ permissions:
       smartspawner.spawner.place: true
       smartspawner.trialspawner.break: true
       smartspawner.trialspawner.place: true
+      smartspawner.egg.use: true
 
   smartspawner.givespawner:
     description: Permission to use /givespawner [entity]
@@ -48,4 +49,7 @@ permissions:
     default: op
   smartspawner.trialspawner.place:
     description: Permission to place trial spawner
+    default: op
+  smartspawner.egg.use:
+    description: Permission to use spawn egg on spawner/trialspawner
     default: op
