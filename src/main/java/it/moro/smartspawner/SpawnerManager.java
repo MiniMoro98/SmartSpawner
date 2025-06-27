@@ -414,6 +414,38 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     //--------------------------------------------------- EGG SPAWN USE + PERMISSIONS------------------------------------------------
+
+/*
+    @EventHandler
+    public void onPlayerRightClickSpawner(PlayerInteractEvent event) {
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_BLOCK && action != Action.RIGHT_CLICK_AIR) return;
+
+        Block block = event.getClickedBlock();
+        if (block == null || (block.getType() != Material.SPAWNER && block.getType() != Material.TRIAL_SPAWNER)) return;
+
+        Player player = event.getPlayer();
+
+        if (block.getType() == Material.SPAWNER) {
+            CreatureSpawner spawner = (CreatureSpawner) block.getState();
+            EntityType type = spawner.getSpawnedType();
+            player.sendMessage("§aSpawner contiene: §e" + (type != null ? type.name() : "Nessuna entità"));
+        }
+
+        if (block.getType() == Material.TRIAL_SPAWNER) {
+            try {
+                TrialSpawner trial = (TrialSpawner) block.getState();
+                EntityType type = trial.getNormalConfiguration().getSpawnedType();
+                player.sendMessage("§aTrial Spawner contiene: §e" + (type != null ? type.name() : "Nessuna entità"));
+            } catch (Exception e) {
+                player.sendMessage("§cErrore nel leggere il Trial Spawner");
+                e.printStackTrace();
+            }
+        }
+    }
+
+ */
+
     @EventHandler
     public void onPlayerUseSpawnEgg(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -421,15 +453,38 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
         if (block == null) return;
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
-        if (block.getType() == Material.SPAWNER || block.getType() == Material.TRIAL_SPAWNER) {
-            if (item.getType().toString().contains("_SPAWN_EGG")) {
-                if (!player.hasPermission("smartspawner.egg.use")) {
-                    player.sendMessage(getString("message.no-spawn-egg-use"));
-                    event.setCancelled(true);
-                }
+        if ((block.getType() == Material.SPAWNER || block.getType() == Material.TRIAL_SPAWNER) &&
+                item.getType().toString().contains("_SPAWN_EGG")) {
+            boolean isEmpty = isEmpty(block);
+            if (isEmpty && !player.hasPermission("smartspawner.egg.empty")) {
+                player.sendMessage(getString("message.no-spawn-egg-use"));
+                event.setCancelled(true);
+                return;
+            }
+            if (!isEmpty && !player.hasPermission("smartspawner.egg.use")) {
+                player.sendMessage(getString("message.no-spawn-egg-use"));
+                event.setCancelled(true);
             }
         }
     }
+
+    private static boolean isEmpty(Block block) {
+        boolean isEmpty = false;
+        if (block.getType() == Material.SPAWNER) {
+            CreatureSpawner spawner = (CreatureSpawner) block.getState();
+            if (spawner.getSpawnedType() == null || spawner.getSpawnedType() == EntityType.UNKNOWN) {
+                isEmpty = true;
+            }
+        } else if (block.getType() == Material.TRIAL_SPAWNER) {
+            TrialSpawner trial = (TrialSpawner) block.getState();
+            TrialSpawnerConfiguration config = trial.getNormalConfiguration();
+            if (config.getSpawnedType() == null || config.getSpawnedType() == EntityType.UNKNOWN) {
+                isEmpty = true;
+            }
+        }
+        return isEmpty;
+    }
+
 
     //------------------------------------------------------------- OTHER ---------------------------------------------------------
     public boolean isEqualsItem(ItemStack item, ItemStack pickaxe) {
