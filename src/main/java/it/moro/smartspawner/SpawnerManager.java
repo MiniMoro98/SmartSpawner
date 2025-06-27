@@ -331,34 +331,40 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             if (block.getType() == Material.TRIAL_SPAWNER) {
                 if (plugin.getConfig().getBoolean("trialspawner-collection")) {
                     if (player.hasPermission("smartspawner.trialspawner.break")) {
-                        new BukkitRunnable() {
-                            @Override
-                            public void run() {
-                                if (block.getState() instanceof TrialSpawner spawner) {
-                                    TrialSpawnerConfiguration spawnerconfig = spawner.getNormalConfiguration();
-                                    if (spawnerconfig.getSpawnedType() == null) {
-                                        return;
-                                    }
-                                    block.getWorld().dropItemNaturally(block.getLocation(), TrialSpawner(spawnerconfig.getSpawnedType()));
-                                    block.setType(Material.AIR);
-                                    block.getState().update(true, false);
-                                    player.playSound(block.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 1.0f);
-                                    block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation(), 20, Material.TRIAL_SPAWNER.createBlockData());
-                                    if (event.getPlayer().getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
-                                        ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
-                                        int damageValue = plugin.getConfig().getInt("damage-item-value");
+                        if (player.hasPermission("smartspawner.trialspawner.drop")) {
+                            new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    if (block.getState() instanceof TrialSpawner spawner) {
+                                        TrialSpawnerConfiguration spawnerconfig = spawner.getNormalConfiguration();
+                                        if (spawnerconfig.getSpawnedType() == null) {
+                                            return;
+                                        }
+                                        block.getWorld().dropItemNaturally(block.getLocation(), TrialSpawner(spawnerconfig.getSpawnedType()));
+                                        block.setType(Material.AIR);
+                                        block.getState().update(true, false);
+                                        player.playSound(block.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 1.0f);
+                                        block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation(), 20, Material.TRIAL_SPAWNER.createBlockData());
+                                        if (event.getPlayer().getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
+                                            ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
+                                            int damageValue = plugin.getConfig().getInt("damage-item-value");
 
-                                        if (hand.getType().getMaxDurability() - damageable.getDamage() < damageValue + 1) {
-                                            player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
-                                            player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
-                                        } else {
-                                            damageable.setDamage(damageable.getDamage() + damageValue);
-                                            hand.setItemMeta(damageable);
+                                            if (hand.getType().getMaxDurability() - damageable.getDamage() < damageValue + 1) {
+                                                player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+                                                player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
+                                            } else {
+                                                damageable.setDamage(damageable.getDamage() + damageValue);
+                                                hand.setItemMeta(damageable);
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }.runTaskLater(plugin, 20L);
+                            }.runTaskLater(plugin, 20L);
+                        } else {
+                            block.setType(Material.AIR);
+                            block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation(), 20, Material.TRIAL_SPAWNER.createBlockData());
+                            player.playSound(block.getLocation(), Sound.BLOCK_CHAIN_BREAK, 1.0f, 1.0f);
+                        }
                     } else {
                         player.sendMessage(getString("message.no-break"));
                     }
@@ -379,25 +385,27 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
             if (block.getType() == Material.SPAWNER) {
                 if (plugin.getConfig().getBoolean("spawner-collection")) {
                     if (player.hasPermission("smartspawner.spawner.break")) {
-                        if (block.getState() instanceof CreatureSpawner spawner) {
-                            event.setExpToDrop(0);
-                            EntityType spawnerType = spawner.getSpawnedType();
-                            ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
-                            BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
-                            if (meta != null) {
-                                spawner.setSpawnedType(spawnerType);
-                                spawner.update();
-                                meta.setBlockState(spawner);
-                                spawnerItem.setItemMeta(meta);
-                                block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
-                                if (player.getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
-                                    ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
-                                    if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value") + 1) {
-                                        player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
-                                        player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
-                                    } else {
-                                        damageable.setDamage(damageable.getDamage() + plugin.getConfig().getInt("damage-item-value") - 1);
-                                        event.getPlayer().getInventory().getItemInMainHand().setItemMeta(damageable);
+                        if (player.hasPermission("smartspawner.spawner.drop")) {
+                            if (block.getState() instanceof CreatureSpawner spawner) {
+                                event.setExpToDrop(0);
+                                EntityType spawnerType = spawner.getSpawnedType();
+                                ItemStack spawnerItem = new ItemStack(Material.SPAWNER);
+                                BlockStateMeta meta = (BlockStateMeta) spawnerItem.getItemMeta();
+                                if (meta != null) {
+                                    spawner.setSpawnedType(spawnerType);
+                                    spawner.update();
+                                    meta.setBlockState(spawner);
+                                    spawnerItem.setItemMeta(meta);
+                                    block.getWorld().dropItemNaturally(block.getLocation(), spawnerItem);
+                                    if (player.getInventory().getItemInMainHand().getItemMeta() instanceof Damageable damageable) {
+                                        ItemStack hand = event.getPlayer().getInventory().getItemInMainHand();
+                                        if (hand.getType().getMaxDurability() - damageable.getDamage() < plugin.getConfig().getInt("damage-item-value") + 1) {
+                                            player.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
+                                            player.getLocation().getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0F, 1.0F);
+                                        } else {
+                                            damageable.setDamage(damageable.getDamage() + plugin.getConfig().getInt("damage-item-value") - 1);
+                                            event.getPlayer().getInventory().getItemInMainHand().setItemMeta(damageable);
+                                        }
                                     }
                                 }
                             }
@@ -414,37 +422,6 @@ public class SpawnerManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     //--------------------------------------------------- EGG SPAWN USE + PERMISSIONS------------------------------------------------
-
-/*
-    @EventHandler
-    public void onPlayerRightClickSpawner(PlayerInteractEvent event) {
-        Action action = event.getAction();
-        if (action != Action.RIGHT_CLICK_BLOCK && action != Action.RIGHT_CLICK_AIR) return;
-
-        Block block = event.getClickedBlock();
-        if (block == null || (block.getType() != Material.SPAWNER && block.getType() != Material.TRIAL_SPAWNER)) return;
-
-        Player player = event.getPlayer();
-
-        if (block.getType() == Material.SPAWNER) {
-            CreatureSpawner spawner = (CreatureSpawner) block.getState();
-            EntityType type = spawner.getSpawnedType();
-            player.sendMessage("§aSpawner contiene: §e" + (type != null ? type.name() : "Nessuna entità"));
-        }
-
-        if (block.getType() == Material.TRIAL_SPAWNER) {
-            try {
-                TrialSpawner trial = (TrialSpawner) block.getState();
-                EntityType type = trial.getNormalConfiguration().getSpawnedType();
-                player.sendMessage("§aTrial Spawner contiene: §e" + (type != null ? type.name() : "Nessuna entità"));
-            } catch (Exception e) {
-                player.sendMessage("§cErrore nel leggere il Trial Spawner");
-                e.printStackTrace();
-            }
-        }
-    }
-
- */
 
     @EventHandler
     public void onPlayerUseSpawnEgg(PlayerInteractEvent event) {

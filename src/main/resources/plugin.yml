@@ -24,8 +24,10 @@ permissions:
       smartspawner.givetrialspawner: true
       smartspawner.spawnerpickaxe: true
       smartspawner.spawner.break: true
+      smartspawner.spawner.drop: true
       smartspawner.spawner.place: true
       smartspawner.trialspawner.break: true
+      smartspawner.trialspawner.drop: true
       smartspawner.trialspawner.place: true
       smartspawner.egg.use: true
       smartspawner.egg.empty: true
@@ -42,11 +44,17 @@ permissions:
   smartspawner.spawner.break:
     description: Permission to collect spawner
     default: op
+  smartspawner.spawner.drop:
+    description: Permission to drop spawner
+    default: op
   smartspawner.spawner.place:
     description: Permission to place spawner
     default: op
   smartspawner.trialspawner.break:
     description: Permission to collect trial spawner
+    default: op
+  smartspawner.trialspawner.drop:
+    description: Permission to drop trial spawner
     default: op
   smartspawner.trialspawner.place:
     description: Permission to place trial spawner
